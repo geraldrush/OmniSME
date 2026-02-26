@@ -1,0 +1,100 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-services:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: sme_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies - API Gateway
+        working-directory: ./services/api-gateway
+        run: npm ci
+
+      - name: Lint API Gateway
+        working-directory: ./services/api-gateway
+        run: npm run lint --if-present
+
+      - name: Build Docker images
+        run: |
+          docker-compose build
+
+      - name: Verify services health
+        run: |
+          docker-compose up -d
+          sleep 10
+          curl -f http://localhost:3000/health || exit 1
+          curl -f http://localhost:3001/health || exit 1
+          curl -f http://localhost:3002/health || exit 1
+          curl -f http://localhost:3003/health || exit 1
+          curl -f http://localhost:3004/health || exit 1
+          curl -f http://localhost:3005/health || exit 1
+          curl -f http://localhost:3006/health || exit 1
+          curl -f http://localhost:3007/health || exit 1
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  deploy-staging:
+    needs: [build-services, security-scan]
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your staging deployment commands here
+
+  deploy-production:
+    needs: [build-services, security-scan]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your production deployment commands here

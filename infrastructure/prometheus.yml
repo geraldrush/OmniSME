@@ -1,0 +1,65 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: "sme-ecommerce"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "api-gateway"
+    static_configs:
+      - targets: ["api-gateway:3000"]
+    metrics_path: "/metrics"
+
+  - job_name: "user-service"
+    static_configs:
+      - targets: ["user-service:3001"]
+    metrics_path: "/metrics"
+
+  - job_name: "product-service"
+    static_configs:
+      - targets: ["product-service:3002"]
+    metrics_path: "/metrics"
+
+  - job_name: "order-service"
+    static_configs:
+      - targets: ["order-service:3003"]
+    metrics_path: "/metrics"
+
+  - job_name: "payment-service"
+    static_configs:
+      - targets: ["payment-service:3004"]
+    metrics_path: "/metrics"
+
+  - job_name: "shipping-service"
+    static_configs:
+      - targets: ["shipping-service:3005"]
+    metrics_path: "/metrics"
+
+  - job_name: "subscription-service"
+    static_configs:
+      - targets: ["subscription-service:3006"]
+    metrics_path: "/metrics"
+
+  - job_name: "job-board-service"
+    static_configs:
+      - targets: ["job-board-service:3007"]
+    metrics_path: "/metrics"
+
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres:5432"]
+
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis:6379"]

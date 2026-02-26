@@ -1,0 +1,305 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Free, open-source
+  postgres:
+    image: postgres:15-alpine
+    container_name: sme_postgres
+    environment:
+      POSTGRES_USER: sme_user
+      POSTGRES_PASSWORD: sme_password_dev
+      POSTGRES_DB: sme_ecommerce
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sme_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sme_network
+
+  # Redis for caching and sessions - Free, open-source
+  redis:
+    image: redis:7-alpine
+    container_name: sme_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sme_network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: sme_api_gateway
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/api-gateway:/app
+      - /app/node_modules
+    networks:
+      - sme_network
+
+  # User Service
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: sme_user_service
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      JWT_SECRET: your-super-secret-key-change-in-production
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+    networks:
+      - sme_network
+
+  # Product Service
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    container_name: sme_product_service
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/product-service:/app
+      - /app/node_modules
+    networks:
+      - sme_network
+
+  # Order Service
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: sme_order_service
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/order-service:/app
+      - /app/node_modules
+    networks:
+      - sme_network
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: sme_payment_service
+    environment:
+      NODE_ENV: development
+      PORT: 3004
+      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      PAYFAST_API_URL: https://api.payfast.co.za
+      PAYFAST_MERCHANT_ID: ${PAYFAST_MERCHANT_ID}
+      PAYFAST_MERCHANT_KEY: ${PAYFAST_MERCHANT_KEY}
+      PAYFAST_PASSPHRASE: ${PAYFAST_PASSPHRASE}
+      OZOW_API_KEY: ${OZOW_API_KEY}
+      OZOW_API_URL: https://api.ozow.com
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/payment-service:/app
+      - /app/node_modules
+    networks:
+      - sme_network
+
+  # Shipping Service
+  shipping-service:
+    build:
+      context: ./services/shipping-service
+      dockerfile: Dockerfile
+    container_name: sme_shipping_service
+    environment:
+      NODE_ENV: development
+      PORT: 3005
+      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      SHIPLOGIC_API_KEY: ${SHIPLOGIC_API_KEY}
+      SHIPLOGIC_API_URL: https://api.shiplogic.com
+      BOBGO_API_KEY: ${BOBGO_API_KEY}
+      BOBGO_API_URL: https://api.bobgo.co.za
+      PARGO_API_KEY: ${PARGO_API_KEY}
+      PARGO_API_URL: https://api.pargo.co.za
+    ports:
+      - "3005:3005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/shipping-service:/app
+      - /app/node_modules
+    networks:
+      - sme_network
+
+  # Subscription Service
+  subscription-service:
+    build:
+      context: ./services/subscription-service
+      dockerfile: Dockerfile
+    container_name: sme_subscription_service
+    environment:
+      NODE_ENV: development
+      PORT: 3006
+      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3006:3006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/subscription-service:/app
+      - /app/node_modules
+    networks:
+      - sme_network
+
+  # Job Board Lead Generator Service
+  job-board-service:
+    build:
+      context: ./services/job-board-service
+      dockerfile: Dockerfile
+    container_name: sme_job_board_service
+    environment:
+      NODE_ENV: development
+      PORT: 3007
+      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      JOB_BOARD_API_URL: ${JOB_BOARD_API_URL}
+      JOB_BOARD_API_KEY: ${JOB_BOARD_API_KEY}
+    ports:
+      - "3007:3007"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/job-board-service:/app
+      - /app/node_modules
+    networks:
+      - sme_network
+
+  # Admin Panel Frontend
+  admin-panel:
+    build:
+      context: ./frontend/admin-panel
+      dockerfile: Dockerfile
+    container_name: sme_admin_panel
+    environment:
+      REACT_APP_API_URL: http://localhost:3000
+      NODE_ENV: development
+    ports:
+      - "3100:3000"
+    depends_on:
+      - api-gateway
+    volumes:
+      - ./frontend/admin-panel/src:/app/src
+    networks:
+      - sme_network
+
+  # Customer Storefront
+  customer-storefront:
+    build:
+      context: ./frontend/customer-storefront
+      dockerfile: Dockerfile
+    container_name: sme_customer_storefront
+    environment:
+      REACT_APP_API_URL: http://localhost:3000
+      NODE_ENV: development
+    ports:
+      - "3101:3000"
+    depends_on:
+      - api-gateway
+    volumes:
+      - ./frontend/customer-storefront/src:/app/src
+    networks:
+      - sme_network
+
+  # Prometheus for metrics (Free monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sme_prometheus
+    volumes:
+      - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - sme_network
+
+  # Grafana for visualization (Free monitoring)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sme_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
+    ports:
+      - "3050:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - sme_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  sme_network:
+    driver: bridge
