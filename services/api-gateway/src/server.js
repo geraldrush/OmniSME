@@ -111,6 +111,8 @@ app.use("/api/v1/subscriptions", require("./routes/subscriptions.js"));
 
 // Stores Route
 app.use("/api/v1/stores", require("./routes/stores.js"));
+app.use("/shop", require("./routes/public-shop.js"));
+app.use("/api/v1/admin", require("./routes/admin.js"));
 
 // ============================================
 // ERROR HANDLING

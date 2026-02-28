@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sme_user"]
+      test: ["CMD-SHELL", "pg_isready -U sme_user -d sme_ecommerce"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -47,7 +47,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-sme_ecommerce}
+      DB_USER: ${DB_USER:-sme_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sme_password_dev}
       REDIS_URL: redis://redis:6379
     ports:
       - "3000:3000"
@@ -71,7 +76,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
-      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-sme_ecommerce}
+      DB_USER: ${DB_USER:-sme_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sme_password_dev}
       JWT_SECRET: your-super-secret-key-change-in-production
       REDIS_URL: redis://redis:6379
     ports:
@@ -94,7 +104,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3002
-      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-sme_ecommerce}
+      DB_USER: ${DB_USER:-sme_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sme_password_dev}
       REDIS_URL: redis://redis:6379
     ports:
       - "3002:3002"
@@ -116,7 +131,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3003
-      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-sme_ecommerce}
+      DB_USER: ${DB_USER:-sme_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sme_password_dev}
       REDIS_URL: redis://redis:6379
     ports:
       - "3003:3003"
@@ -138,7 +158,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3004
-      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-sme_ecommerce}
+      DB_USER: ${DB_USER:-sme_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sme_password_dev}
       PAYFAST_API_URL: https://api.payfast.co.za
       PAYFAST_MERCHANT_ID: ${PAYFAST_MERCHANT_ID}
       PAYFAST_MERCHANT_KEY: ${PAYFAST_MERCHANT_KEY}
@@ -165,7 +190,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3005
-      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-sme_ecommerce}
+      DB_USER: ${DB_USER:-sme_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sme_password_dev}
       SHIPLOGIC_API_KEY: ${SHIPLOGIC_API_KEY}
       SHIPLOGIC_API_URL: https://api.shiplogic.com
       BOBGO_API_KEY: ${BOBGO_API_KEY}
@@ -192,7 +222,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3006
-      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-sme_ecommerce}
+      DB_USER: ${DB_USER:-sme_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sme_password_dev}
       REDIS_URL: redis://redis:6379
     ports:
       - "3006:3006"
@@ -214,7 +249,12 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3007
-      DATABASE_URL: postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce
+      DATABASE_URL: ${DATABASE_URL:-postgresql://sme_user:sme_password_dev@postgres:5432/sme_ecommerce}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-sme_ecommerce}
+      DB_USER: ${DB_USER:-sme_user}
+      DB_PASSWORD: ${DB_PASSWORD:-sme_password_dev}
       JOB_BOARD_API_URL: ${JOB_BOARD_API_URL}
       JOB_BOARD_API_KEY: ${JOB_BOARD_API_KEY}
     ports:

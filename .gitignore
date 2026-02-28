@@ -5,6 +5,7 @@ yarn.lock
 
 # Environment variables
 .env
+.env.supabase
 .env.local
 .env.*.local
 

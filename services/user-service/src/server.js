@@ -11,11 +11,12 @@ const PORT = process.env.PORT || 3001;
 
 // Database connection
 const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
   host: process.env.DB_HOST || "postgres",
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || "sme_ecommerce",
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "postgres",
+  user: process.env.DB_USER || "sme_user",
+  password: process.env.DB_PASSWORD || "sme_password_dev",
 });
 
 // Middleware
@@ -25,6 +26,31 @@ app.use(express.json());
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
+
+const toSlug = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+const ensureUniqueStoreSlug = async (client, preferredName) => {
+  const baseSlug = toSlug(preferredName) || "sme-store";
+  let candidate = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const existing = await client.query(
+      "SELECT id FROM sme_stores WHERE store_slug = $1 LIMIT 1",
+      [candidate],
+    );
+    if (existing.rows.length === 0) {
+      return candidate;
+    }
+    candidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+};
 
 // Health check
 app.get("/health", (req, res) => {
@@ -52,11 +78,21 @@ const verifyToken = (req, res, next) => {
 
 // Sign Up - Create new user account + store
 app.post("/auth/signup", async (req, res) => {
-  const { email, password, name, businessName, businessRegistration } =
-    req.body;
+  const {
+    email,
+    password,
+    name,
+    full_name,
+    user_type,
+    businessName,
+    businessRegistration,
+  } = req.body;
+  const resolvedName = full_name || name;
+  const accountType = user_type || "customer";
+  const isMerchant = accountType === "sme_owner";
 
   // Validation
-  if (!email || !password || !name) {
+  if (!email || !password || !resolvedName) {
     return res
       .status(400)
       .json({ message: "Email, password, and name are required" });
@@ -88,17 +124,40 @@ app.post("/auth/signup", async (req, res) => {
 
       // Create user
       const userResult = await client.query(
-        "INSERT INTO users (email, password_hash, full_name, role, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, email, full_name",
-        [email, hashedPassword, name, "sme_owner"],
+        "INSERT INTO users (email, password_hash, full_name, user_type, role, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id, email, full_name",
+        [
+          email,
+          hashedPassword,
+          resolvedName,
+          accountType,
+          isMerchant ? "owner" : "user",
+        ],
       );
       const userId = userResult.rows[0].id;
 
-      // Create store
-      const storeResult = await client.query(
-        "INSERT INTO sme_stores (owner_id, store_name, business_registration_number, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, store_name",
-        [userId, businessName || name, businessRegistration || ""],
-      );
-      const storeId = storeResult.rows[0].id;
+      let storeId = null;
+      if (isMerchant) {
+        const storeName = businessName || resolvedName;
+        const storeSlug = await ensureUniqueStoreSlug(client, storeName);
+        const storeResult = await client.query(
+          "INSERT INTO sme_stores (owner_id, store_name, store_slug, is_active, settings, created_at, updated_at) VALUES ($1, $2, $3, true, $4, NOW(), NOW()) RETURNING id, store_name, store_slug",
+          [
+            userId,
+            storeName,
+            storeSlug,
+            JSON.stringify({
+              business_registration_number: businessRegistration || "",
+              payment_methods: ["whatsapp", "payfast", "bank_transfer"],
+            }),
+          ],
+        );
+        storeId = storeResult.rows[0].id;
+
+        await client.query(
+          "UPDATE users SET tenant_id = $1 WHERE id = $2",
+          [storeId, userId],
+        );
+      }
 
       await client.query("COMMIT");
 
@@ -115,8 +174,9 @@ app.post("/auth/signup", async (req, res) => {
         user: {
           id: userId,
           email,
-          name,
+          name: resolvedName,
           storeId,
+          user_type: accountType,
         },
       });
     } catch (error) {
@@ -142,7 +202,7 @@ app.post("/auth/login", async (req, res) => {
   try {
     // Find user
     const result = await pool.query(
-      "SELECT u.id, u.email, u.password_hash, u.full_name, u.role, s.id as store_id FROM users u LEFT JOIN sme_stores s ON u.id = s.owner_id WHERE u.email = $1",
+      "SELECT u.id, u.email, u.password_hash, u.full_name, u.role, u.user_type, s.id as store_id FROM users u LEFT JOIN sme_stores s ON u.id = s.owner_id WHERE u.email = $1",
       [email],
     );
 
@@ -179,6 +239,7 @@ app.post("/auth/login", async (req, res) => {
         name: user.full_name,
         storeId: user.store_id,
         role: user.role,
+        user_type: user.user_type,
       },
     });
   } catch (error) {
