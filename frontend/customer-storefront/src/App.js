@@ -228,10 +228,6 @@ const normalizeStorefrontProduct = (product) => {
   };
 };
 
-const isUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-
-const formatCurrency = (amount) => `R${Number(amount || 0).toFixed(2)}`;
-
 const toSlug = (value) =>
   String(value || "")
     .toLowerCase()
@@ -249,6 +245,13 @@ const toAbsoluteUrl = (path) => {
   const normalized = String(path).startsWith("/") ? path : `/${path}`;
   return `${window.location.origin}${normalized}`;
 };
+
+const BagIcon = Icons.bag;
+const UserIcon = Icons.user;
+const CartIcon = Icons.cart;
+const SearchIcon = Icons.search;
+const BoxIcon = Icons.box;
+const StarIcon = Icons.star;
 
 function Storefront() {
   const { slug: storeSlug } = useParams();
@@ -509,7 +512,7 @@ function Storefront() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:gap-6">
             <div className="flex items-center gap-2">
-              <Icons.bag className="h-7 w-7 text-blue-600" aria-hidden="true" />
+              <BagIcon className="h-7 w-7 text-blue-600" aria-hidden="true" />
               {isStorePage ? (
                 <Link to="/" className="text-xl sm:text-2xl font-semibold text-gray-900 hover:text-blue-700">
                   {activeStore?.store_name || "SME Store"}
@@ -540,7 +543,7 @@ function Storefront() {
                   }}
                   className="text-gray-600 hover:text-gray-900 text-sm inline-flex items-center gap-2"
                 >
-                  <Icons.user className="h-4 w-4" aria-hidden="true" />
+                  <UserIcon className="h-4 w-4" aria-hidden="true" />
                   Sign Out
                 </button>
               ) : (
@@ -551,7 +554,7 @@ function Storefront() {
                   }}
                   className="text-blue-600 hover:text-blue-700 font-semibold text-sm inline-flex items-center gap-2"
                 >
-                  <Icons.user className="h-4 w-4" aria-hidden="true" />
+                  <UserIcon className="h-4 w-4" aria-hidden="true" />
                   Sign In
                 </button>
               )}
@@ -560,7 +563,7 @@ function Storefront() {
                 onClick={() => setShowCartModal(true)}
                 className="relative flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold text-sm"
               >
-                <Icons.cart className="h-4 w-4" aria-hidden="true" />
+                <CartIcon className="h-4 w-4" aria-hidden="true" />
                 Cart
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
@@ -634,7 +637,7 @@ function Storefront() {
 
         {filteredProducts.length === 0 ? (
           <div className="text-center py-16">
-            <Icons.search
+            <SearchIcon
               className="h-12 w-12 text-gray-400 mx-auto mb-4"
               aria-hidden="true"
             />
@@ -650,7 +653,7 @@ function Storefront() {
                 className="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden group"
               >
                 <div className="bg-gradient-to-br from-gray-200 to-gray-300 h-48 flex items-center justify-center overflow-hidden group-hover:from-blue-200 group-hover:to-blue-300 transition">
-                  <Icons.box className="h-12 w-12 text-gray-500" aria-hidden="true" />
+                  <BoxIcon className="h-12 w-12 text-gray-500" aria-hidden="true" />
                 </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
@@ -659,7 +662,7 @@ function Storefront() {
                     </h4>
                     {product.reviews > 0 ? (
                       <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                        <Icons.star
+                        <StarIcon
                           className="h-3 w-3 text-yellow-500"
                           aria-hidden="true"
                         />
@@ -716,7 +719,7 @@ function Storefront() {
           <div className="bg-white w-full sm:w-96 h-screen sm:h-auto rounded-t-2xl sm:rounded-2xl flex flex-col max-h-screen sm:max-h-96 overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
               <h3 className="text-xl sm:text-2xl font-bold inline-flex items-center gap-2">
-                <Icons.cart className="h-5 w-5" aria-hidden="true" />
+                <CartIcon className="h-5 w-5" aria-hidden="true" />
                 Your Cart
               </h3>
               <button
