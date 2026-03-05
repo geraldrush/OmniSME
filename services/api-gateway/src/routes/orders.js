@@ -38,10 +38,14 @@ const mapOrder = (row) => ({
   created_at: row.created_at,
 });
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const resolveTenantId = async (items = []) => {
   const firstItem = items.find((item) => item?.store_id || item?.tenant_id);
-  if (firstItem?.store_id || firstItem?.tenant_id) {
-    return firstItem.store_id || firstItem.tenant_id;
+  const candidateId = firstItem?.store_id || firstItem?.tenant_id;
+  if (candidateId && UUID_REGEX.test(candidateId)) {
+    return candidateId;
   }
 
   const fallback = await pool.query(
@@ -201,6 +205,8 @@ router.post("/", async (req, res) => {
     const orderId = insert.rows[0].id;
 
     for (const item of items) {
+      const productId = UUID_REGEX.test(String(item.id)) ? item.id : null;
+      if (!productId) continue;
       await pool.query(
         `INSERT INTO order_items (
           order_id,
@@ -213,7 +219,7 @@ router.post("/", async (req, res) => {
         ) VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
         [
           orderId,
-          item.id,
+          productId,
           item.name || "Product",
           Math.max(1, Math.floor(safeNumber(item.quantity, 1))),
           safeNumber(item.price, 0),
