@@ -236,10 +236,3 @@ const server = app.listen(PORT, () => {
 
 process.on("SIGTERM", () => server.close());
 module.exports = app;
-
-const server = app.listen(PORT, () => {
-  console.log(`Payment Service listening on port ${PORT}`);
-});
-
-process.on("SIGTERM", () => server.close());
-module.exports = app;
